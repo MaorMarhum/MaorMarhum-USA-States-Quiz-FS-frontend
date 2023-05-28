@@ -7,7 +7,7 @@ import Join from "./Join";
 import io from "socket.io-client";
 import { useCookies } from "react-cookie";
 
-const socket = io("https://usa-states-quiz.adaptable.app/", {
+const socket = io("https://usa-states-quiz.adaptable.app", {
   query: { url: window.location.href },
 });
 
