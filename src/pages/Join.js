@@ -5,7 +5,7 @@ import { useHistory } from "react-router-dom";
 const Join = () => {
   const [roomCode, setRoomCode] = useState("");
   const history = useHistory();
-  const isFormValid = roomCode.trim().length === 6
+  const isFormValid = roomCode.trim().length === 6;
 
   const handleSubmit = (event) => {
     event.preventDefault();
