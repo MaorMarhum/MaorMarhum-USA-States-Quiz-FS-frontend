@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Grid, Paper, Typography } from "@mui/material";
 import { useParams, Link, useHistory } from "react-router-dom";
 
-const Room = ({ setCookie, socket }) => {
+const Room = ({ socket, name }) => {
   const [users, setUsers] = useState(1);
   const { roomCode } = useParams();
   const history = useHistory();
@@ -30,10 +30,10 @@ const Room = ({ setCookie, socket }) => {
 
   useEffect(() => {
     socket.emit("joinRoom", url);
-  }, [socket, url]);
+  }, [socket, url, name]);
 
   const handleButtonClick = () => {
-    socket.emit("startGame", { url: url, roomCode: roomCode });
+    socket.emit("startGame", { url: url, roomCode: roomCode, name1: name });
   };
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const Room = ({ setCookie, socket }) => {
     return () => {
       socket.off("navigateToURL");
     };
-  }, [history, socket]);
+  }, [history, socket, name]);
 
   return (
     <Grid

@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { Grid, Button, Typography, Paper, TextField } from "@mui/material";
 import Data from "../Data";
 import Countdown from "../components/Countdown";
+import Cube from "../components/Cube";
 import Success from "../assets/success.mp3";
 import CountdownSound from "../assets/countdown.mp3";
 import Error from "../assets/error.mp3";
+import Cookies from "js-cookie";
 
-const Game = ({ cookies, socket }) => {
+const Game = ({ cookies, socket, roomCode }) => {
   const [states, setStates] = useState(Data);
   const [stateToRemove, setStateToRemove] = useState("");
   const currentPlayerRef = useRef(cookies.playerIndex);
@@ -18,6 +20,8 @@ const Game = ({ cookies, socket }) => {
   const [noStates, setNoStates] = useState([]);
   const [showWinMessage, setShowWinMessage] = useState(false);
   const [winMessage, setWinMessage] = useState("");
+  const [myName] = useState(Cookies.get("myName"));
+  const [opName, setOpName] = useState("");
   const audioSuccess = useRef(new Audio(Success));
   const audioError = useRef(new Audio(Error));
   const audioCountdownSound = useRef(new Audio(CountdownSound));
@@ -62,8 +66,36 @@ const Game = ({ cookies, socket }) => {
   };
 
   useEffect(() => {
+    fetch(`http://localhost:3000/players/${roomCode}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Error retrieving player names");
+        }
+      })
+      .then((data) => {
+        let name1 = data.player1Name;
+        let name2 = data.player2Name;
+        if (name1 === myName) {
+          setOpName(name2);
+          socket.emit("missingName", name1);
+        } else if (name2 === myName) {
+          setOpName(name1);
+          socket.emit("missingName", name2);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, [myName, roomCode, socket]);
+
+  useEffect(() => {
     socket.on("firstTurn", (turnNumber) => {
       setChangePlayer(turnNumber);
+    });
+    socket.on("missingName", (name) => {
+      setOpName(name);
     });
     socket.on("yourTurn", ({ turnNumber, stateToRemove }) => {
       if (states.includes(stateToRemove)) {
@@ -82,7 +114,7 @@ const Game = ({ cookies, socket }) => {
       setWinMessage("אתה הפסדת!");
       setShowWinMessage(true);
     }
-  }, [socket, states, noStates, seconds]);
+  }, [socket, states, noStates, seconds, myName]);
 
   if (showWinMessage) {
     return (
@@ -130,9 +162,22 @@ const Game = ({ cookies, socket }) => {
       >
         <Grid item xs={10} sm={8} md={6} lg={4}>
           <Paper elevation={3} style={{ padding: "2rem" }}>
-            <Typography align="center" variant="h4" gutterBottom>
-              עכשיו תורך
-            </Typography>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: 'space-around',
+                alignItems: "center",
+              }}
+            >
+              <Typography align="center" variant="h4" gutterBottom>
+                {myName}
+              </Typography>
+              <Typography align="center" variant="h4" gutterBottom>
+                {opName}
+              </Typography>
+            </div>
+            <Cube changePlayer={changePlayer} />
             <Countdown
               countOver={countOver}
               seconds={seconds}
@@ -192,6 +237,7 @@ const Game = ({ cookies, socket }) => {
                 lineHeight: "15px",
                 color: "red",
                 marginTop: "1rem",
+                marginBottom: "1rem",
                 textAlign: "center",
               }}
             >
@@ -203,13 +249,17 @@ const Game = ({ cookies, socket }) => {
                 lineHeight: "15px",
                 color: "green",
                 marginTop: "1rem",
+                marginBottom: "1rem",
                 textAlign: "center",
               }}
             >
               {success}
             </div>
             <div style={{ textAlign: "center", fontSize: "30px" }}>
-              <p style={{ marginBottom: "1rem", marginTop: "2rem" }}>
+              <p style={{ textAlign: "right", fontSize: "25px" }}>
+                מספר המדינות שנוחשו: {`${noStates.length}/50`}
+              </p>
+              <p style={{ marginBottom: "1rem", marginTop: "1rem" }}>
                 מדינות ששומשו
               </p>
               <ol
@@ -240,9 +290,22 @@ const Game = ({ cookies, socket }) => {
       >
         <Grid item xs={10} sm={8} md={6} lg={4}>
           <Paper elevation={3} style={{ padding: "2rem" }}>
-            <Typography align="center" variant="h4" gutterBottom>
-              אנא המתן לתורך...
-            </Typography>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: 'space-around',
+                alignItems: "center",
+              }}
+            >
+              <Typography align="center" variant="h4" gutterBottom>
+                {myName}
+              </Typography>
+              <Typography align="center" variant="h4" gutterBottom>
+                {opName}
+              </Typography>
+            </div>
+            <Cube changePlayer={changePlayer} />
             <Countdown
               countOver={countOver}
               seconds={seconds}
@@ -252,7 +315,16 @@ const Game = ({ cookies, socket }) => {
               changePlayer={changePlayer}
             />
             <div style={{ textAlign: "center", fontSize: "30px" }}>
-              <p style={{ marginBottom: "1rem", marginTop: "2rem" }}>
+              <p
+                style={{
+                  textAlign: "right",
+                  fontSize: "25px",
+                  marginTop: "1rem",
+                }}
+              >
+                מספר המדינות שנוחשו: {`${noStates.length}/50`}
+              </p>
+              <p style={{ marginBottom: "1rem", marginTop: "1rem" }}>
                 מדינות ששומשו
               </p>
               <ol

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Button, Typography, Paper } from "@mui/material";
+import { Grid, Button, Typography, Paper, TextField } from "@mui/material";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import Room from "./Room";
 import Game from "./Game";
 import Join from "./Join";
 import io from "socket.io-client";
 import { useCookies } from "react-cookie";
+import Cookies from "js-cookie";
 
 const socket = io("https://usa-states-quiz-fs.onrender.com", {
   query: { url: window.location.href },
@@ -25,18 +26,26 @@ const generateRoomCode = (length) => {
 const Main = () => {
   const [roomCode, setRoomCode] = useState();
   const [cookies] = useCookies(["playerIndex"]);
+  const [name, setName] = useState("");
 
   useEffect(() => {
     setRoomCode(generateRoomCode(6));
   }, []);
 
+  const setCookieName = () => {
+    Cookies.set("myName", name);
+  };
+
+  const createRoom = () => {
+    socket.emit("createRoom", { roomCode: roomCode, name: name });
+    Cookies.set("myName", name);
+  };
+
   const setCookieWithExpiration = (cookieName, cookieValue) => {
     const expirationDate = new Date();
-    expirationDate.setTime(
-      expirationDate.getTime() + 1 * 60 * 60 * 1000
-    );
+    expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000);
 
-    document.cookie = `${cookieName}=${cookieValue};expires=${expirationDate.toUTCString()};path=/`;;
+    document.cookie = `${cookieName}=${cookieValue};expires=${expirationDate.toUTCString()};path=/`;
   };
 
   const renderHomePage = () => {
@@ -58,11 +67,41 @@ const Main = () => {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+              }}
+            >
+              <TextField
+                label="אנא הזן שם"
+                margin="normal"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                sx={{
+                  "& label": {
+                    left: "unset",
+                    right: "1.75rem",
+                    transformOrigin: "right",
+                    fontSize: "1rem",
+                  },
+                  "& legend": {
+                    textAlign: "right",
+                    fontSize: "1rem",
+                  },
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
                 marginTop: "1rem",
               }}
             >
               <Button
                 color="primary"
+                type="submit"
+                onClick={createRoom}
                 variant="contained"
                 to={`/room/${roomCode}`}
                 component={Link}
@@ -72,13 +111,16 @@ const Main = () => {
                   borderBottomRightRadius: "50",
                   borderBottomLeftRadius: "0",
                 }}
+                disabled={!name}
               >
                 צור חדר
               </Button>
               <Button
                 color="secondary"
                 variant="contained"
+                type="submit"
                 to="/join"
+                onClick={setCookieName}
                 component={Link}
                 style={{
                   borderTopLeftRadius: "50",
@@ -86,6 +128,7 @@ const Main = () => {
                   borderBottomRightRadius: "0",
                   borderBottomLeftRadius: "50",
                 }}
+                disabled={!name}
               >
                 הצטרף לחדר
               </Button>
@@ -103,17 +146,30 @@ const Main = () => {
         <Route
           path="/room/:roomCode"
           render={(props) => (
-            <Room {...props} socket={socket} setCookie={setCookieWithExpiration} />
+            <Room
+              {...props}
+              name={name}
+              socket={socket}
+              setCookie={setCookieWithExpiration}
+            />
           )}
         />
         <Route
           path="/game/:roomCode"
           render={(props) => (
-            <Game socket={socket} setCookie={setCookieWithExpiration} {...props} cookies={cookies} />
+            <Game
+              roomCode={roomCode}
+              socket={socket}
+              setCookie={setCookieWithExpiration}
+              {...props}
+              cookies={cookies}
+            />
           )}
         />
       </Switch>
-      <Route path="/join" component={Join} />
+      <Route path="/join">
+        <Join socket={socket} name={name} />
+      </Route>
     </Router>
   );
 };

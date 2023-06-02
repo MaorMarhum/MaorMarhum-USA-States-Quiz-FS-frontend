@@ -2,14 +2,16 @@ import React, { useState } from "react";
 import { Grid, Button, Typography, Paper, TextField } from "@mui/material";
 import { useHistory } from "react-router-dom";
 
-const Join = () => {
+const Join = ({name, socket}) => {
   const [roomCode, setRoomCode] = useState("");
   const history = useHistory();
   const isFormValid = roomCode.trim().length === 6;
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const newCode = roomCode.toUpperCase()
+    const newCode = roomCode.toUpperCase();
+    socket.emit("join", {name: name, roomCode: newCode})
+    console.log(name, roomCode);
     history.push(`/room/${newCode}`);
     window.location.reload();
   };
@@ -58,7 +60,7 @@ const Join = () => {
             <div
               style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 marginTop: "1rem",
@@ -71,6 +73,17 @@ const Join = () => {
                 disabled={!isFormValid}
               >
                 הצטרף
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                style={{ marginTop: "1rem" }}
+                onClick={() => {
+                  history.push("/");
+                  window.location.reload();
+                }}
+              >
+                חזרה
               </Button>
             </div>
           </form>
