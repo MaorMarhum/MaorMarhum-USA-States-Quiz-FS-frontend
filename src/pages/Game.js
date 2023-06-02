@@ -66,7 +66,7 @@ const Game = ({ cookies, socket, roomCode }) => {
   };
 
   useEffect(() => {
-    fetch(`https://https://usa-states-quiz-fs.onrender.com/players/${roomCode}`)
+    fetch(`https://usa-states-quiz-fs.onrender.com/players/${roomCode}`)
       .then((response) => {
         if (response.ok) {
           return response.json();
