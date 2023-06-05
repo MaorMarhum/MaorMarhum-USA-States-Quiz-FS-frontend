@@ -7,8 +7,10 @@ import Success from "../assets/success.mp3";
 import CountdownSound from "../assets/countdown.mp3";
 import Error from "../assets/error.mp3";
 import Cookies from "js-cookie";
+import { useParams } from "react-router-dom";
+import Scores from "../components/Scores";
 
-const Game = ({ cookies, socket, roomCode }) => {
+const Game = ({ cookies, socket }) => {
   const [states, setStates] = useState(Data);
   const [stateToRemove, setStateToRemove] = useState("");
   const currentPlayerRef = useRef(cookies.playerIndex);
@@ -25,6 +27,7 @@ const Game = ({ cookies, socket, roomCode }) => {
   const audioSuccess = useRef(new Audio(Success));
   const audioError = useRef(new Audio(Error));
   const audioCountdownSound = useRef(new Audio(CountdownSound));
+  const { roomCode } = useParams();
 
   const resetSeconds = () => {
     setSeconds(45);
@@ -110,11 +113,11 @@ const Game = ({ cookies, socket, roomCode }) => {
       setShowWinMessage(true);
     });
     if (seconds === 0) {
-      socket.emit("gameOver");
+      socket.emit("gameOver", {score: noStates.length, roomCode: roomCode});
       setWinMessage("אתה הפסדת!");
       setShowWinMessage(true);
     }
-  }, [socket, states, noStates, seconds, myName]);
+  }, [socket, states, noStates, seconds, myName, roomCode]);
 
   if (showWinMessage) {
     return (
@@ -129,6 +132,10 @@ const Game = ({ cookies, socket, roomCode }) => {
             <Typography align="center" variant="h4" gutterBottom>
               {winMessage}
             </Typography>
+            <Typography align="center" variant="h5" gutterBottom>
+              טבלת השיאנים
+            </Typography>
+            <Scores />
             <div
               style={{
                 display: "flex",
